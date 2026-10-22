@@ -11,7 +11,7 @@ def get_user_zone_name(db: Session, zone_id: int) -> str:
         if cz:
             return cz.zone_name
     first_zone = db.query(models.CommunityZone).first()
-    return first_zone.zone_name if first_zone else "Dombivli Central"
+    return first_zone.zone_name if first_zone else "Mumbai Central"
 
 @router.post("/register", response_model=schemas.Token, status_code=status.HTTP_201_CREATED)
 def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):

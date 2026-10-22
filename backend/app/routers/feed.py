@@ -11,24 +11,44 @@ class CorroborateRequest(BaseModel):
     sighting_id: int
 
 @router.get("/sightings")
-def get_sightings(zone: Optional[str] = Query("Zone 4"), db: Session = Depends(get_db)):
+def get_sightings(zone: Optional[str] = Query(None), db: Session = Depends(get_db)):
     """Returns real zone-scoped live stray animal sightings from database."""
-    sightings = crud.get_zone_sightings(db, zone_code=zone or "ZONE-4")
-    return [
-        {
+    from app import models
+    sightings = crud.get_zone_sightings(db, zone_code=zone)
+    result = []
+    for s in sightings:
+        zone_label = "Live Incident"
+        if s.zone_id:
+            cz = db.query(models.CommunityZone).filter(models.CommunityZone.id == s.zone_id).first()
+            if cz:
+                zone_label = cz.zone_name
+
+        priority = "ROUTINE"
+        triage_score = None
+        requires_human_review = False
+        if s.complaint_id:
+            comp = db.query(models.Complaint).filter(models.Complaint.id == s.complaint_id).first()
+            if comp:
+                priority = comp.priority or "ROUTINE"
+                triage_score = comp.priority_score
+                requires_human_review = bool(comp.requires_human_review)
+
+        result.append({
             "id": s.id,
             "author_name": s.author_name or "Citizen Reporter",
             "animal_type": s.animal_type,
             "location": s.location,
-            "zone": zone,
+            "zone": zone_label,
+            "priority": priority,
+            "triage_score": triage_score,
+            "requires_human_review": requires_human_review,
             "sighting_time": str(s.created_at),
             "notes": s.notes,
             "corroboration_count": s.corroboration_count,
             "has_upvoted": False,
             "photo_url": s.photo_url
-        }
-        for s in sightings
-    ]
+        })
+    return result
 
 @router.post("/sighting", status_code=status.HTTP_201_CREATED)
 def create_sighting(

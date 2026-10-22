@@ -52,15 +52,15 @@ def find_duplicate_reports(
     latitude: float,
     longitude: float,
     image_embedding: Optional[List[float]] = None,
-    radius_meters: float = 100.0,
-    time_window_hours: float = 48.0,
+    radius_meters: float = 500.0,
+    time_window_hours: float = 3.0,
     similarity_threshold: float = DINOV3_CALIBRATED_THRESHOLD
 ) -> Dict[str, Any]:
     """
     Module 2: Duplicate Complaint Detection (Dual-Signal Consensus)
-    Combines DINOv3 image-to-image similarity with PostGIS spatial radius (100m / 48h).
+    Combines DINOv3 image-to-image similarity with PostGIS spatial radius (500m / 3h).
     
-    Rule: Require BOTH DINOv3 similarity (>= 0.95) AND geospatial proximity (<= 100m) to auto-merge ("high").
+    Rule: Require BOTH DINOv3 similarity (>= 0.95) AND geospatial proximity (<= 500m) to auto-merge ("high").
     If only one signal fires, flag as "needs_review".
     
     API Contract:

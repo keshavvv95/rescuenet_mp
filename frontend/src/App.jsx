@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
-import PWAInstallBanner from './components/PWAInstallBanner';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -16,6 +15,7 @@ import VideoVerificationCamera from './pages/VideoVerificationCamera';
 import VolunteerDashboard from './pages/VolunteerDashboard';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
 import DonationsPage from './pages/DonationsPage';
+import ErrorBoundary from './components/ErrorBoundary';
 
 import { Loader } from 'lucide-react';
 
@@ -24,8 +24,8 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <Loader className="h-8 w-8 animate-spin text-emerald-400" />
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+        <Loader className="h-8 w-8 animate-spin text-[#FF5722]" />
       </div>
     );
   }
@@ -44,12 +44,12 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
 function AppContent() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col font-sans selection:bg-emerald-500 selection:text-emerald-950">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col font-sans selection:bg-[#FF5722] selection:text-white">
       <Navbar />
-      <PWAInstallBanner />
       
       <main className="flex-grow pb-12">
-        <Routes>
+        <ErrorBoundary>
+          <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           
@@ -136,6 +136,7 @@ function AppContent() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </ErrorBoundary>
       </main>
       
       <footer className="py-6 border-t border-slate-900 bg-slate-950/80 text-center text-xs text-slate-500">

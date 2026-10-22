@@ -39,9 +39,10 @@ CREATE TABLE IF NOT EXISTS complaints (
     detection_confidence DOUBLE PRECISION DEFAULT 0.0,
     confirmed_animal_type VARCHAR(100),
     description TEXT,
-    priority VARCHAR(50) DEFAULT 'Normal', -- Emergency, Normal
+    priority VARCHAR(50) DEFAULT 'ROUTINE', -- CRITICAL, HIGH, ROUTINE
     priority_score DOUBLE PRECISION DEFAULT 0.0,
     priority_reasoning TEXT,
+    requires_human_review BOOLEAN DEFAULT FALSE,
     image_embedding TEXT, -- JSON array string
     reporter_count INTEGER DEFAULT 1,
     status VARCHAR(50) DEFAULT 'New', -- New, Assigned, In Progress, Searching, Resolved, Not Found, Closed
@@ -49,6 +50,9 @@ CREATE TABLE IF NOT EXISTS complaints (
     clip_score DOUBLE PRECISION DEFAULT 0.92,
     exif_score DOUBLE PRECISION DEFAULT 0.98,
     is_authentic_flag BOOLEAN DEFAULT TRUE,
+    is_ai_generated BOOLEAN DEFAULT FALSE,
+    is_web_image BOOLEAN DEFAULT FALSE,
+    authenticity_status VARCHAR(255) DEFAULT 'AUTHENTIC FIELD PHOTO VERIFIED',
     is_sos BOOLEAN DEFAULT FALSE,
     search_radius_meters DOUBLE PRECISION DEFAULT 100.0,
     active_until TIMESTAMP WITH TIME ZONE,

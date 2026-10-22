@@ -4,11 +4,11 @@
 export const getCurrentLocation = (options = { timeout: 10000, maximumAge: 60000, enableHighAccuracy: true }) => {
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
-      // Fallback location (Dombivli East)
+      // Fallback location (Mumbai East)
       resolve({
         latitude: 19.2183,
         longitude: 73.0868,
-        address: 'Dombivli East - Station & Ramnagar (Fallback GPS)',
+        address: 'Mumbai East - Station & Ramnagar (Fallback GPS)',
         accuracy: 50,
         isFallback: true
       });
@@ -26,12 +26,12 @@ export const getCurrentLocation = (options = { timeout: 10000, maximumAge: 60000
         });
       },
       (error) => {
-        console.warn('Geolocation failed or permission denied, using default Dombivli coordinates:', error.message);
-        // Realistic default coords: Dombivli East
+        console.warn('Geolocation failed or permission denied, using default Mumbai coordinates:', error.message);
+        // Realistic default coords: Mumbai East
         resolve({
           latitude: 19.2183,
           longitude: 73.0868,
-          address: 'Dombivli East - Station & Ramnagar (Default GPS)',
+          address: 'Mumbai East - Station & Ramnagar (Default GPS)',
           accuracy: 100,
           isFallback: true,
           errorMessage: error.message

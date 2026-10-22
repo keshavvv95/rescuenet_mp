@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL } from '../config/api.js';
 
 /**
  * Official Real API Client for RescueNet Platform
@@ -55,21 +55,38 @@ export const apiClient = {
     });
   },
 
+  async getTriagePreview(payload) {
+    return await this.request('/reports/triage-preview', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  },
+
   async uploadPhoto(file) {
-    const formData = new FormData();
-    formData.append('file', file);
+    const formData = file instanceof FormData ? file : new FormData();
+    if (!(file instanceof FormData)) {
+      formData.append('file', file);
+    }
     return await this.request('/reports/upload', {
       method: 'POST',
       body: formData
     });
   },
 
+  async uploadImage(fileOrFormData) {
+    return await this.uploadPhoto(fileOrFormData);
+  },
+
   // 2. Duplicate Check
-  async checkDuplicates({ latitude, longitude, animal_type }) {
+  async checkDuplicates({ latitude, longitude, animal_type, radius_meters = 500.0, time_window_hours = 3.0 }) {
     return await this.request('/reports/check-duplicate', {
       method: 'POST',
-      body: JSON.stringify({ latitude, longitude, animal_type })
+      body: JSON.stringify({ latitude, longitude, animal_type, radius_meters, time_window_hours })
     });
+  },
+
+  async checkDuplicateIncidents(latitude, longitude, radius = 500.0) {
+    return await this.checkDuplicates({ latitude, longitude, radius_meters: radius });
   },
 
   // 3. Submit Complaint
@@ -78,6 +95,26 @@ export const apiClient = {
       method: 'POST',
       body: JSON.stringify(reportData)
     });
+  },
+
+  async createIncident(incidentData) {
+    const payload = {
+      photo_url: incidentData.photo_url || incidentData.image_url || '/static/uploads/reports/default.jpg',
+      latitude: Number(incidentData.latitude) || 19.0760,
+      longitude: Number(incidentData.longitude) || 72.8777,
+      address: incidentData.address || incidentData.location || 'Current Location Coordinates',
+      detected_animal_type: incidentData.animal_type || incidentData.detected_animal_type || 'Dog',
+      detection_confidence: incidentData.confidence || incidentData.detection_confidence || 0.90,
+      confirmed_animal_type: incidentData.animal_type || incidentData.confirmed_animal_type || 'Dog',
+      description: incidentData.description || incidentData.title || 'Emergency rescue report',
+      urgency: incidentData.urgency || 'Emergency',
+      is_sos: Boolean(incidentData.is_sos ?? true),
+      distress_score: Number(incidentData.distress_score || 0.5),
+      is_ai_generated: Boolean(incidentData.is_ai_generated || false),
+      is_web_image: Boolean(incidentData.is_web_image || false),
+      authenticity_status: incidentData.authenticity_status || null
+    };
+    return await this.submitReport(payload);
   },
 
   // 4. Get Reports (My Reports / All Reports)
@@ -90,8 +127,9 @@ export const apiClient = {
   },
 
   // 5. Community Feed & Sightings
-  async getFeedSightings(zone = 'Dombivli East - Station & Ramnagar') {
-    return await this.request(`/feed/sightings?zone=${encodeURIComponent(zone)}`);
+  async getFeedSightings(zone = '') {
+    const query = zone ? `?zone=${encodeURIComponent(zone)}` : '';
+    return await this.request(`/feed/sightings${query}`);
   },
 
   async createSighting(sightingData) {
@@ -152,18 +190,44 @@ export const apiClient = {
     return await this.request('/officer/volunteers');
   },
 
-  async assignVolunteer({ complaint_id, volunteer_name, volunteer_id, instructions }) {
+  async getAvailableVolunteers() {
+    return await this.getVolunteersList();
+  },
+
+  async assignVolunteer(complaintIdOrObj, maybeVolunteerName) {
+    let payload = {};
+    if (typeof complaintIdOrObj === 'object' && complaintIdOrObj !== null) {
+      payload = complaintIdOrObj;
+    } else {
+      payload = {
+        complaint_id: String(complaintIdOrObj),
+        volunteer_name: maybeVolunteerName || 'Assigned Volunteer'
+      };
+    }
     return await this.request('/officer/assign', {
       method: 'POST',
-      body: JSON.stringify({ complaint_id, volunteer_name, volunteer_id, instructions })
+      body: JSON.stringify(payload)
     });
   },
 
-  async updateComplaintStatus({ complaint_id, status }) {
+  async updateComplaintStatus(complaintIdOrObj, maybeStatus) {
+    let payload = {};
+    if (typeof complaintIdOrObj === 'object' && complaintIdOrObj !== null) {
+      payload = complaintIdOrObj;
+    } else {
+      payload = {
+        complaint_id: String(complaintIdOrObj),
+        status: maybeStatus
+      };
+    }
     return await this.request('/officer/update-status', {
       method: 'POST',
-      body: JSON.stringify({ complaint_id, status })
+      body: JSON.stringify(payload)
     });
+  },
+
+  async updateIncidentStatus(complaintIdOrObj, maybeStatus) {
+    return await this.updateComplaintStatus(complaintIdOrObj, maybeStatus);
   },
 
   // 9. Video Verification
@@ -179,6 +243,29 @@ export const apiClient = {
     return await this.request('/analytics/overview');
   },
 
+  async getCivicAnalytics() {
+    return await this.getAnalyticsOverview();
+  },
+
+  async downloadAnalyticsExport() {
+    const token = localStorage.getItem('token');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    const response = await fetch(`${API_BASE_URL}/analytics/export`, { headers });
+    if (!response.ok) {
+      throw new Error(`Export failed: ${response.statusText}`);
+    }
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `rescuenet_complaints_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    return true;
+  },
+
   async createDonationCheckout(donationData) {
     return await this.request('/donations/checkout', {
       method: 'POST',
@@ -186,8 +273,16 @@ export const apiClient = {
     });
   },
 
+  async createDonation(donationData) {
+    return await this.createDonationCheckout(donationData);
+  },
+
   async getDonationLedger() {
     return await this.request('/donations/ledger');
+  },
+
+  async getDonationsLedger() {
+    return await this.getDonationLedger();
   },
 
   // 11. Cruelty & SOS

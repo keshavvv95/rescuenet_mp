@@ -9,3 +9,4 @@ ultralytics==8.3.70
 pillow==11.1.0
 python-dotenv==1.0.1
 bcrypt==4.2.1
+requests==2.31.0

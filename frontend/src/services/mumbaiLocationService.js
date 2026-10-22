@@ -1,26 +1,26 @@
 /**
- * Precise Dombivli Municipal GIS & Landmark Mapping Service (Client-Side)
- * Provides detailed locality mapping, landmark auto-complete, and exact zone resolution for Dombivli city.
+ * Precise Mumbai Municipal GIS & Landmark Mapping Service (Client-Side)
+ * Provides detailed locality mapping, landmark auto-complete, and exact zone resolution for Mumbai city.
  */
 
 export const DOMBIVLI_CITY_CENTER = {
   latitude: 19.2183,
   longitude: 73.0868,
-  cityName: "Dombivli",
+  cityName: "Mumbai",
   district: "Thane",
-  corporation: "KDMC (Kalyan-Dombivli Municipal Corporation)",
+  corporation: "KDMC (Kalyan-Mumbai Municipal Corporation)",
   state: "Maharashtra"
 };
 
 export const DOMBIVLI_MUNICIPAL_ZONES = [
   {
     code: "ZONE-1",
-    name: "Dombivli East - Station & Ramnagar",
+    name: "Mumbai East - Station & Ramnagar",
     shortName: "Ramnagar & Station East",
     center: { lat: 19.2183, lng: 73.0868 },
     bounds: { minLat: 19.2150, maxLat: 19.2220, minLng: 73.0830, maxLng: 73.0900 },
     landmarks: [
-      "Dombivli Railway Station East",
+      "Mumbai Railway Station East",
       "Ramnagar Police Station",
       "Baji Prabhu Chowk",
       "Nehru Road",
@@ -32,7 +32,7 @@ export const DOMBIVLI_MUNICIPAL_ZONES = [
   },
   {
     code: "ZONE-2",
-    name: "Dombivli East - Phadke Road & Manpada",
+    name: "Mumbai East - Phadke Road & Manpada",
     shortName: "Phadke Road & Manpada",
     center: { lat: 19.2140, lng: 73.0920 },
     bounds: { minLat: 19.2100, maxLat: 19.2160, minLng: 73.0880, maxLng: 73.0960 },
@@ -49,7 +49,7 @@ export const DOMBIVLI_MUNICIPAL_ZONES = [
   },
   {
     code: "ZONE-3",
-    name: "Dombivli East - MIDC & Residential",
+    name: "Mumbai East - MIDC & Residential",
     shortName: "MIDC & Sagaon",
     center: { lat: 19.2080, lng: 73.0980 },
     bounds: { minLat: 19.2000, maxLat: 19.2100, minLng: 73.0920, maxLng: 73.1100 },
@@ -66,24 +66,24 @@ export const DOMBIVLI_MUNICIPAL_ZONES = [
   },
   {
     code: "ZONE-4",
-    name: "Dombivli West - Station & Subhash Road",
+    name: "Mumbai West - Station & Subhash Road",
     shortName: "Subhash Road & Station West",
     center: { lat: 19.2195, lng: 73.0810 },
     bounds: { minLat: 19.2150, maxLat: 19.2250, minLng: 73.0760, maxLng: 73.0830 },
     landmarks: [
-      "Dombivli Railway Station West",
+      "Mumbai Railway Station West",
       "Subhash Road Market",
       "Mahatma Gandhi Road",
       "Vishnu Nagar Police Station",
       "Anand Nagar",
       "Samrat Ashok Nagar",
-      "Old Dombivli Court",
+      "Old Mumbai Court",
       "Gopi Cine Mall"
     ]
   },
   {
     code: "ZONE-5",
-    name: "Dombivli West - Garibachawada & Kopar",
+    name: "Mumbai West - Garibachawada & Kopar",
     shortName: "Garibachawada & Kopar",
     center: { lat: 19.2230, lng: 73.0760 },
     bounds: { minLat: 19.2200, maxLat: 19.2350, minLng: 73.0650, maxLng: 73.0790 },
@@ -101,9 +101,9 @@ export const DOMBIVLI_MUNICIPAL_ZONES = [
 ];
 
 /**
- * Resolves latitude and longitude to exact Dombivli zone and landmark details.
+ * Resolves latitude and longitude to exact Mumbai zone and landmark details.
  */
-export function resolveDombivliZone(lat, lng) {
+export function resolveMumbaiZone(lat, lng) {
   if (!lat || !lng) {
     return DOMBIVLI_MUNICIPAL_ZONES[0];
   }
@@ -132,9 +132,9 @@ export function resolveDombivliZone(lat, lng) {
 }
 
 /**
- * Search landmarks across Dombivli
+ * Search landmarks across Mumbai
  */
-export function searchDombivliLandmarks(query) {
+export function searchMumbaiLandmarks(query) {
   if (!query || query.trim().length === 0) return [];
   const q = query.toLowerCase();
   const results = [];

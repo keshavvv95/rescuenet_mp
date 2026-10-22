@@ -49,7 +49,10 @@ def verify_live_video_frame(
                 "mode": mode
             }
 
-        temp_frame_path = f"static/uploads/temp/frame_verify_temp.jpg"
+        temp_dir = "static/uploads/temp"
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_frame_path = os.path.join(temp_dir, "frame_verify_temp.jpg")
+
         if "," in frame_data:
             frame_bytes = base64.b64decode(frame_data.split(",")[1])
         else:
@@ -77,8 +80,9 @@ def verify_live_video_frame(
             except Exception:
                 target_emb = []
 
-        if not target_emb and comp.photo_url and os.path.exists(comp.photo_url):
-            target_emb = extract_image_embedding(comp.photo_url)
+        local_target_photo = (comp.photo_url or "").lstrip("/")
+        if not target_emb and local_target_photo and os.path.exists(local_target_photo):
+            target_emb = extract_image_embedding(local_target_photo)
 
         if not target_emb:
             target_emb = [0.1] * 128
@@ -100,8 +104,14 @@ def verify_live_video_frame(
         return {
             "match": bool(matched),
             "confidence": float(conf_val),
+            "similarity_percentage": float(sim_percentage),
             "explanation": explanation_text,
-            "mode": mode
+            "mode": mode,
+            "target_case_id": f"RN-{comp.id}",
+            "target_tracking_code": comp.tracking_code,
+            "target_photo_url": comp.photo_url,
+            "target_animal": comp.confirmed_animal_type or comp.detected_animal_type or "Animal",
+            "target_address": comp.address
         }
     except Exception as e:
         logger.error(f"Error during video verification: {e}")

@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [userRole, setUserRole] = useState(() => localStorage.getItem('role') || 'citizen');
   const [userName, setUserName] = useState(() => localStorage.getItem('name') || 'Citizen');
   const [userEmail, setUserEmail] = useState(() => localStorage.getItem('email') || null);
-  const [userZone, setUserZone] = useState(() => localStorage.getItem('zone') || 'Dombivli East - Station & Ramnagar');
+  const [userZone, setUserZone] = useState(() => localStorage.getItem('zone') || 'Mumbai East - Station & Ramnagar');
   const [loading, setLoading] = useState(false);
 
   const logout = () => {
@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
       setUserRole(localStorage.getItem('role') || 'citizen');
       setUserName(localStorage.getItem('name') || 'Citizen');
       setUserEmail(localStorage.getItem('email') || null);
-      setUserZone(localStorage.getItem('zone') || 'Dombivli East - Station & Ramnagar');
+      setUserZone(localStorage.getItem('zone') || 'Mumbai East - Station & Ramnagar');
     }
   }, []);
 
@@ -61,18 +61,18 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('role', data.role || 'citizen');
     localStorage.setItem('name', data.name || 'User');
     localStorage.setItem('email', data.email || email);
-    localStorage.setItem('zone', data.zone || 'Dombivli East - Station & Ramnagar');
+    localStorage.setItem('zone', data.zone || 'Mumbai East - Station & Ramnagar');
 
     setToken(data.access_token);
     setUserRole(data.role || 'citizen');
     setUserName(data.name || 'User');
     setUserEmail(data.email || email);
-    setUserZone(data.zone || 'Dombivli East - Station & Ramnagar');
+    setUserZone(data.zone || 'Mumbai East - Station & Ramnagar');
 
     return data;
   };
 
-  const register = async (email, password, fullName, phoneNumber, role = 'citizen', customZone = 'Dombivli East - Station & Ramnagar') => {
+  const register = async (email, password, fullName, phoneNumber, role = 'citizen', customZone = 'Mumbai East - Station & Ramnagar') => {
     const cleanEmail = (email || '').trim().toLowerCase();
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     const data = await response.json();
-    const userAssignedZone = customZone || data.zone || 'Dombivli East - Station & Ramnagar';
+    const userAssignedZone = customZone || data.zone || 'Mumbai East - Station & Ramnagar';
 
     localStorage.setItem('token', data.access_token);
     localStorage.setItem('role', data.role || role);

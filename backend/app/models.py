@@ -39,9 +39,10 @@ class Complaint(Base):
     detection_confidence = Column(Float, default=0.0)
     confirmed_animal_type = Column(String, nullable=True)
     description = Column(Text, nullable=True)
-    priority = Column(String, default="Normal") # Emergency, Normal
+    priority = Column(String, default="ROUTINE") # CRITICAL, HIGH, ROUTINE
     priority_score = Column(Float, default=0.0)
     priority_reasoning = Column(Text, nullable=True)
+    requires_human_review = Column(Boolean, default=False)
     image_embedding = Column(Text, nullable=True)
     reporter_count = Column(Integer, default=1)
     status = Column(String, default="New") # New, Assigned, In Progress, Searching, Resolved, Not Found, Closed
@@ -51,6 +52,9 @@ class Complaint(Base):
     clip_score = Column(Float, default=0.92)
     exif_score = Column(Float, default=0.98)
     is_authentic_flag = Column(Boolean, default=True)
+    is_ai_generated = Column(Boolean, default=False)
+    is_web_image = Column(Boolean, default=False)
+    authenticity_status = Column(String, default="AUTHENTIC FIELD PHOTO VERIFIED")
     
     is_sos = Column(Boolean, default=False)
     search_radius_meters = Column(Float, default=100.0)

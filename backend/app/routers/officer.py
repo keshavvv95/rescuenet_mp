@@ -4,7 +4,7 @@ from typing import Optional, List
 from pydantic import BaseModel
 from app.database import get_db
 from app import models, auth, crud
-from app.services.dombivli_mapper import resolve_dombivli_zone
+from app.services.mumbai_mapper import resolve_mumbai_zone
 from app.ai.video_verification import verify_live_video_frame
 
 router = APIRouter(prefix="/api/officer", tags=["Officer & NGO Dashboard"])
@@ -30,12 +30,12 @@ def get_officer_complaints(
 ):
     """
     Retrieves real complaints from PostgreSQL database for officers and NGO admins,
-    enriched with exact Dombivli zone spatial resolution.
+    enriched with exact Mumbai zone spatial resolution.
     """
     complaints = db.query(models.Complaint).order_by(models.Complaint.created_at.desc()).all()
     result = []
     for c in complaints:
-        zone_info = resolve_dombivli_zone(db, c.latitude, c.longitude)
+        zone_info = resolve_mumbai_zone(db, c.latitude, c.longitude)
         
         assigned_name = "Unassigned"
         if c.assigned_volunteer_id:
@@ -52,10 +52,12 @@ def get_officer_complaints(
             "db_id": c.id,
             "tracking_code": c.tracking_code,
             "animal_type": c.confirmed_animal_type or c.detected_animal_type or "Dog",
-            "status": c.status,
-            "priority": c.priority,
-            "priority_score": c.priority_score,
+            "status": c.status or "New",
+            "priority": c.priority or "ROUTINE",
+            "priority_score": c.priority_score or 0.0,
             "priority_reasoning": c.priority_reasoning,
+            "requires_human_review": bool(c.requires_human_review),
+            "detection_confidence": c.detection_confidence or 0.0,
             "assigned_to": assigned_name,
             "zone_name": zone_info["name"],
             "zone_code": zone_info["code"],
@@ -66,7 +68,11 @@ def get_officer_complaints(
             "created_at": str(c.created_at),
             "description": c.description,
             "image_url": c.photo_url,
-            "is_sos": c.is_sos or False
+            "is_sos": c.is_sos or False,
+            "is_ai_generated": bool(getattr(c, "is_ai_generated", False)),
+            "is_web_image": bool(getattr(c, "is_web_image", False)),
+            "authenticity_status": getattr(c, "authenticity_status", "AUTHENTIC FIELD PHOTO VERIFIED") or "AUTHENTIC FIELD PHOTO VERIFIED",
+            "is_authentic_flag": bool(getattr(c, "is_authentic_flag", True))
         })
     return result
 
@@ -85,7 +91,7 @@ def get_volunteers(
                 "user_id": u.id,
                 "name": u.full_name,
                 "status": "Available",
-                "current_zone": "Dombivli East — Manpada"
+                "current_zone": "Mumbai East — Manpada"
             }
             for u in user_vols
         ]
@@ -95,7 +101,7 @@ def get_volunteers(
             "user_id": v.user_id,
             "name": v.name,
             "status": v.status,
-            "current_zone": v.current_zone or "Dombivli East — Manpada",
+            "current_zone": v.current_zone or "Mumbai East — Manpada",
             "skill_tags": v.skill_tags
         }
         for v in volunteers
@@ -152,7 +158,7 @@ def assign_volunteer(
 def update_status(
     req: UpdateStatusRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(auth.require_role(["officer", "ngo_admin", "super_admin"]))
+    current_user: dict = Depends(auth.require_role(["officer", "ngo_admin", "super_admin", "volunteer"]))
 ):
     """
     Updates complaint status in PostgreSQL database.
@@ -171,20 +177,36 @@ def update_status(
     complaint.status = req.status
     if req.status == "Not Found":
         complaint.search_radius_meters = round((complaint.search_radius_meters or 100.0) * 2.5, 1)
-    
+
+    if req.status == "Resolved":
+        # Delete related animal case sightings and any upvotes from the live feed
+        sightings = db.query(models.ZoneSighting).filter(
+            (models.ZoneSighting.complaint_id == complaint.id) |
+            (models.ZoneSighting.notes.ilike(f"%{complaint.tracking_code}%"))
+        ).all()
+        sighting_ids = [s.id for s in sightings]
+        if sighting_ids:
+            db.query(models.SightingUpvote).filter(
+                models.SightingUpvote.sighting_id.in_(sighting_ids)
+            ).delete(synchronize_session=False)
+            db.query(models.ZoneSighting).filter(
+                models.ZoneSighting.id.in_(sighting_ids)
+            ).delete(synchronize_session=False)
+
     db.commit()
 
     return {
         "success": True,
         "complaint_id": f"RN-{complaint.id}",
         "new_status": req.status,
-        "updated_search_radius_meters": complaint.search_radius_meters
+        "updated_search_radius_meters": complaint.search_radius_meters,
+        "live_feed_removed": req.status == "Resolved"
     }
 
 @router.post("/verify-video")
 def verify_video(
     req: VideoFrameRequest,
-    current_user: dict = Depends(auth.require_role(["officer", "ngo_admin", "super_admin"]))
+    current_user: dict = Depends(auth.require_role(["officer", "ngo_admin", "super_admin", "volunteer", "citizen"]))
 ):
     """Real-Time On-Site Multimodal Live Video Verification Assistant."""
     res = verify_live_video_frame(req.frame, req.case_id)

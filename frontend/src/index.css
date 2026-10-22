@@ -1,100 +1,209 @@
 @import "tailwindcss";
 
-/* Google Stitch Visual Tokens & Typography System */
+/* ==========================================================================
+   Chatpata & Visually Sundar Design System Tokens
+   Vibrant, Spicy, Energetic & High-Contrast Visual Palette
+   ========================================================================== */
 :root {
-  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --color-primary: #059669;
-  --color-primary-glow: rgba(16, 185, 129, 0.25);
-  --color-emergency: #ef4444;
-  --color-ai-cyan: #06b6d4;
-  --bg-dark-slate: #0f172a;
+  /* Brand Core Tokens */
+  --bg-dark: #0F172A;            /* Deep Obsidian Midnight */
+  --bg-light: #F8FAFC;           /* Crisp Clean Porcelain */
+  --color-chatpata: #FF5722;     /* Spicy Tangy Fiery Coral */
+  --color-chatpata-hover: #E64A19;
+  --color-tangy: #FF9F1C;        /* Tangy Electric Saffron */
+  --color-amber: #FFB703;        /* Vivid Golden Mango */
+  --color-slate-dark: #0F172A;   /* Primary Typography Dark */
+  --color-slate-muted: #64748B;  /* Secondary Typography Slate */
+  --color-border: #E2E8F0;       /* Crisp Border */
+
+  /* Legacy Theme Variable Aliases (guarantees backward-compat with chatpata overhaul) */
+  --bg-forest: #0F172A;
+  --bg-ivory: #F8FAFC;
+  --color-lime: #FF9F1C;
+  --color-dark-teal: #0F172A;
+  --color-pure-white: #FFFFFF;
+  --color-evergreen: #1E293B;
+  --color-sage: #64748B;
+
+  --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-body: 'DM Sans', 'Manrope', system-ui, -apple-system, sans-serif;
+
+  --shadow-warm-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
+  --shadow-warm: 0 4px 12px -1px rgba(15, 23, 42, 0.07), 0 2px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-warm-lg: 0 16px 32px -4px rgba(255, 87, 34, 0.12), 0 6px 12px -4px rgba(15, 23, 42, 0.06);
 }
 
-/* Custom Scrollbar */
+@layer base {
+  body {
+    font-family: var(--font-body);
+    background-color: var(--bg-light);
+    color: var(--color-slate-dark);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    color: inherit;
+    letter-spacing: -0.025em;
+  }
+}
+
+.text-cyber-yellow {
+  color: #FACC15 !important;
+}
+
+/* Custom Scrollbar with Chatpata Saffron Accent */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #020617;
+  background: #F8FAFC;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #CBD5E1;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #059669;
+  background: #FF5722;
 }
 
-/* Ultra-Premium Glassmorphism Panels */
+/* Themed Surfaces */
+.hero-panel {
+  background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 40%, #1E293B 100%);
+  color: #F8FAFC;
+  border: 1px solid rgba(255, 159, 28, 0.25);
+  box-shadow: 0 12px 30px -8px rgba(255, 87, 34, 0.2);
+}
+
+.stat-card-dark {
+  background-color: #0F172A;
+  color: #F8FAFC;
+  border: 1px solid #1E293B;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1);
+}
+
 .glass-panel {
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.05);
 }
 
 .glass-card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 2px 8px -1px rgba(15, 23, 42, 0.04);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-card:hover {
-  border-color: rgba(16, 185, 129, 0.3);
-  box-shadow: 0 10px 30px -5px rgba(16, 185, 129, 0.15);
+  border-color: #FF5722;
+  box-shadow: 0 10px 25px -3px rgba(255, 87, 34, 0.12);
   transform: translateY(-2px);
 }
 
 .glass-input {
-  background: rgba(2, 6, 23, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  transition: all 0.25s ease;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  color: #0F172A;
+  transition: all 0.2s ease;
 }
 
 .glass-input:focus {
   outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+  border-color: #FF5722;
+  box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.25);
 }
 
-/* Glowing Badges & Indicators */
+/* Primary Buttons */
+.btn-ivory {
+  background-color: #FFFFFF;
+  color: #0F172A;
+  font-weight: 700;
+  border: 1px solid #E2E8F0;
+  transition: all 0.2s ease;
+}
+.btn-ivory:hover {
+  background-color: #FFF7ED;
+  border-color: #FF5722;
+  color: #EA580C;
+}
+
+.btn-forest {
+  background: linear-gradient(135deg, #FF5722 0%, #FF8A00 100%);
+  color: #FFFFFF;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(255, 87, 34, 0.3);
+  transition: all 0.2s ease;
+}
+.btn-forest:hover {
+  background: linear-gradient(135deg, #E64A19 0%, #F57C00 100%);
+  box-shadow: 0 6px 20px rgba(255, 87, 34, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-lime {
+  background: linear-gradient(135deg, #FF9F1C 0%, #FFB703 100%);
+  color: #0F172A;
+  font-weight: 800;
+  box-shadow: 0 4px 14px rgba(255, 159, 28, 0.25);
+  transition: all 0.2s ease;
+}
+.btn-lime:hover {
+  background: linear-gradient(135deg, #F59E0B 0%, #FFAA00 100%);
+}
+
+/* Photo Frames */
+.photo-frame {
+  background-color: #FFFFFF;
+  padding: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 1rem;
+}
+
+/* Semantic Badges */
+.badge-lime {
+  background: rgba(255, 159, 28, 0.15);
+  color: #EA580C;
+  border: 1px solid rgba(255, 159, 28, 0.4);
+}
+
 .badge-ai {
-  background: rgba(6, 182, 212, 0.15);
-  color: #22d3ee;
-  border: 1px solid rgba(6, 182, 212, 0.3);
-  box-shadow: 0 0 12px rgba(6, 182, 212, 0.2);
+  background: rgba(255, 87, 34, 0.1);
+  color: #FF5722;
+  border: 1px solid rgba(255, 87, 34, 0.25);
 }
 
 .badge-emergency {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.12);
+  color: #DC2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .badge-success {
   background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.badge-warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #D97706;
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 /* Micro-animations */
 @keyframes pulse-ring {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+    box-shadow: 0 0 0 0 rgba(255, 87, 34, 0.6);
   }
   70% {
     transform: scale(1);
-    box-shadow: 0 0 0 12px rgba(16, 185, 129, 0);
+    box-shadow: 0 0 0 10px rgba(255, 87, 34, 0);
   }
   100% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    box-shadow: 0 0 0 0 rgba(255, 87, 34, 0);
   }
 }
 
@@ -102,15 +211,14 @@
   animation: pulse-ring 2s infinite;
 }
 
-/* Page transitions */
 .fade-in-up {
-  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -118,42 +226,38 @@
   }
 }
 
-/* Modern Clean Dark Leaflet Map Styling (CartoDB Dark Matter Theme) */
+/* Leaflet Map Styling */
 .leaflet-container {
-  background: #020617 !important;
+  background: #F8FAFC !important;
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.leaflet-tile {
-  filter: brightness(0.7) invert(0.9) contrast(1.4) hue-rotate(190deg) saturate(0.4);
+  border: 1px solid #E2E8F0;
 }
 
 .leaflet-bar {
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid #E2E8F0 !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08) !important;
 }
 
 .leaflet-bar a {
-  background-color: #0f172a !important;
-  color: #f8fafc !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  border-bottom: 1px solid #E2E8F0 !important;
 }
 
 .leaflet-bar a:hover {
-  background-color: #1e293b !important;
-  color: #10b981 !important;
+  background-color: #FFF7ED !important;
+  color: #EA580C !important;
 }
 
 .leaflet-popup-content-wrapper {
-  background: #0f172a !important;
-  color: #f8fafc !important;
-  border: 1px solid rgba(16, 185, 129, 0.3) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
+  background: #FFFFFF !important;
+  color: #0F172A !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12) !important;
 }
 
 .leaflet-popup-tip {
-  background: #0f172a !important;
+  background: #FFFFFF !important;
 }

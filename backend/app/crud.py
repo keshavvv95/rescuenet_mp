@@ -35,7 +35,7 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.commit()
     db.refresh(db_user)
 
-    zone_name = "Dombivli Zone"
+    zone_name = "Mumbai Zone"
     if db_user.zone_id:
         cz = db.query(models.CommunityZone).filter(models.CommunityZone.id == db_user.zone_id).first()
         if cz:
@@ -44,7 +44,7 @@ def create_user(db: Session, user: schemas.UserCreate):
     create_notification(
         db, 
         user_id=db_user.id, 
-        title="Welcome to RescueNet Dombivli", 
+        title="Welcome to RescueNet Mumbai", 
         message=f"Account created successfully as {db_user.role}. Assigned to {zone_name}.",
         notif_type="info"
     )
@@ -65,15 +65,39 @@ def create_user(db: Session, user: schemas.UserCreate):
 # 2. Complaint CRUD
 def create_complaint(db: Session, report: schemas.ComplaintCreate, citizen_id: Optional[int] = None):
     p_res = calculate_priority_score(
-        detection_confidence=report.detection_confidence or 0.90,
+        detection_confidence=report.detection_confidence or 0.0,
         description=report.description or "",
-        visual_distress_score=report.distress_score or 0.0
+        visual_distress_score=report.distress_score or 0.0,
+        detected_animal_type=report.confirmed_animal_type or report.detected_animal_type or "Dog"
     )
-    priority_level = p_res["priority"].capitalize()
+    priority_level = p_res["priority"]
     score = p_res["score"]
     reasoning = p_res["reasoning"]
+    requires_human_review = p_res["requires_human_review"]
 
     auth_result = evaluate_photo_authenticity(report.photo_url)
+    is_ai = bool(getattr(report, "is_ai_generated", False) or auth_result.get("is_ai_generated", False))
+    is_web = bool(getattr(report, "is_web_image", False) or auth_result.get("is_web_image", False))
+
+    if is_ai:
+        auth_status = "AI-GENERATED IMAGE DETECTED"
+    elif is_web:
+        auth_status = "WEB / STOCK IMAGE DETECTED (NOT A LIVE FIELD PHOTO)"
+    else:
+        auth_status = getattr(report, "authenticity_status", None) or auth_result.get("status_text", "AUTHENTIC FIELD PHOTO VERIFIED")
+
+    is_flagged = is_ai or is_web or auth_result.get("is_suspicious", False)
+    is_authentic_flag = not is_flagged
+
+    # If it's an SOS report with an AI or Web image, elevate requires_human_review = True
+    # and annotate reasoning with an EVIDENCE ALERT for Super Admin in KDMC Triage
+    is_sos_report = bool(report.is_sos)
+    if is_sos_report and (is_ai or is_web):
+        requires_human_review = True
+        flag_label = "AI-Generated Image" if is_ai else "Web/Stock Image"
+        reasoning = f"{reasoning} | ⚠️ EVIDENCE ALERT: SOS Report flagged with {flag_label}. Super Admin live field verification required."
+    elif is_flagged:
+        requires_human_review = True
 
     tracking_code = f"RN-{uuid.uuid4().hex[:6].upper()}"
     embedding_json = json.dumps(report.image_embedding) if report.image_embedding else None
@@ -86,39 +110,56 @@ def create_complaint(db: Session, report: schemas.ComplaintCreate, citizen_id: O
         longitude=report.longitude,
         address=report.address or "Captured Location",
         detected_animal_type=report.detected_animal_type or "Dog",
-        detection_confidence=report.detection_confidence or 0.90,
+        detection_confidence=report.detection_confidence or 0.0,
         confirmed_animal_type=report.confirmed_animal_type or report.detected_animal_type or "Dog",
         description=report.description,
-        priority=report.urgency or priority_level,
+        priority=priority_level,
         priority_score=score,
         priority_reasoning=reasoning,
+        requires_human_review=requires_human_review,
         image_embedding=embedding_json,
         reporter_count=1,
         status="New",
-        fft_score=auth_result["fft_score"],
-        clip_score=auth_result["classifier_score"],
-        exif_score=0.95 if auth_result["exif_consistent"] else 0.50,
-        is_authentic_flag=not auth_result["is_suspicious"],
-        is_sos=report.is_sos or False
+        fft_score=auth_result.get("fft_score", 0.95),
+        clip_score=auth_result.get("classifier_score", 0.92),
+        exif_score=0.95 if auth_result.get("exif_consistent", False) else 0.50,
+        is_authentic_flag=is_authentic_flag,
+        is_ai_generated=is_ai,
+        is_web_image=is_web,
+        authenticity_status=auth_status,
+        is_sos=is_sos_report
     )
     db.add(db_report)
     db.commit()
     db.refresh(db_report)
 
-    nearest_zone = db.query(models.CommunityZone).order_by(
-        func.earth_distance(
-            func.ll_to_earth(models.CommunityZone.center_latitude, models.CommunityZone.center_longitude),
-            func.ll_to_earth(report.latitude, report.longitude)
-        )
-    ).first()
+    zones = db.query(models.CommunityZone).all()
+    if zones:
+        import math
+        def haversine(lat1, lon1, lat2, lon2):
+            R = 6371.0
+            dlat = math.radians(lat2 - lat1)
+            dlon = math.radians(lon2 - lon1)
+            a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
+            c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+            return R * c * 1000.0
+        nearest_zone = min(zones, key=lambda z: haversine(z.center_latitude, z.center_longitude, report.latitude, report.longitude))
+    else:
+        nearest_zone = None
 
     zone_id = nearest_zone.id if nearest_zone else None
+
+    author_name = "Citizen Reporter"
+    if citizen_id:
+        user = db.query(models.User).filter(models.User.id == citizen_id).first()
+        if user and user.full_name:
+            author_name = user.full_name
 
     sighting = models.ZoneSighting(
         complaint_id=db_report.id,
         zone_id=zone_id,
         author_id=citizen_id,
-        author_name="Citizen Reporter",
+        author_name=author_name,
         animal_type=db_report.confirmed_animal_type,
         location=db_report.address,
         notes=db_report.description,
@@ -138,11 +179,18 @@ def get_complaints(db: Session, citizen_id: Optional[int] = None, status_filter:
         query = query.filter(models.Complaint.status == status_filter)
     return query.order_by(models.Complaint.created_at.desc()).all()
 
-# 3. Community Sightings & Corroboration CRUD
 def get_zone_sightings(db: Session, zone_code: Optional[str] = None):
-    query = db.query(models.ZoneSighting)
-    if zone_code:
-        z = db.query(models.CommunityZone).filter(models.CommunityZone.code == zone_code).first()
+    # Exclude sightings of cases that have been resolved
+    resolved_subquery = db.query(models.Complaint.id).filter(models.Complaint.status == "Resolved").subquery()
+    query = db.query(models.ZoneSighting).filter(
+        (models.ZoneSighting.complaint_id.is_(None)) |
+        (~models.ZoneSighting.complaint_id.in_(resolved_subquery))
+    )
+    if zone_code and zone_code.strip() and zone_code.lower() not in ("all", "all cases", "all zones", "mumbai region", "none"):
+        z = db.query(models.CommunityZone).filter(
+            (models.CommunityZone.code.ilike(f"%{zone_code.strip()}%")) |
+            (models.CommunityZone.zone_name.ilike(f"%{zone_code.strip()}%"))
+        ).first()
         if z:
             query = query.filter(models.ZoneSighting.zone_id == z.id)
     return query.order_by(models.ZoneSighting.created_at.desc()).all()
@@ -239,7 +287,7 @@ def create_cruelty_report(db: Session, req: schemas.CrueltyReportRequest, report
 
 def trigger_sos_complaint(db: Session, req: schemas.SOSRequest, citizen_id: Optional[int] = None):
     report_in = schemas.ComplaintCreate(
-        photo_url="/static/uploads/reports/sos_default.jpg",
+        photo_url=req.photo_url or "/static/uploads/reports/sos_default.jpg",
         latitude=req.latitude,
         longitude=req.longitude,
         address="Emergency SOS Location",
@@ -248,7 +296,10 @@ def trigger_sos_complaint(db: Session, req: schemas.SOSRequest, citizen_id: Opti
         confirmed_animal_type="Dog",
         description=f"CRITICAL SOS EMERGENCY ALERT: {req.note or 'Immediate rescue required'}",
         urgency="Emergency",
-        is_sos=True
+        is_sos=True,
+        is_ai_generated=getattr(req, "is_ai_generated", False) or False,
+        is_web_image=getattr(req, "is_web_image", False) or False,
+        authenticity_status=getattr(req, "authenticity_status", None)
     )
     return create_complaint(db, report_in, citizen_id)
 
@@ -343,6 +394,19 @@ def complete_volunteer_task(db: Session, task_id_str: str, photo_url: Optional[s
         comp = db.query(models.Complaint).filter(models.Complaint.id == task.complaint_id).first()
         if comp:
             comp.status = "Resolved"
+            # Delete related sightings and upvotes from live feed
+            sightings = db.query(models.ZoneSighting).filter(
+                (models.ZoneSighting.complaint_id == comp.id) |
+                (models.ZoneSighting.notes.ilike(f"%{comp.tracking_code}%"))
+            ).all()
+            sighting_ids = [s.id for s in sightings]
+            if sighting_ids:
+                db.query(models.SightingUpvote).filter(
+                    models.SightingUpvote.sighting_id.in_(sighting_ids)
+                ).delete(synchronize_session=False)
+                db.query(models.ZoneSighting).filter(
+                    models.ZoneSighting.id.in_(sighting_ids)
+                ).delete(synchronize_session=False)
         db.commit()
         db.refresh(task)
         return task
@@ -367,27 +431,43 @@ def get_analytics_overview(db: Session):
     zones = db.query(models.CommunityZone).order_by(models.CommunityZone.id.asc()).all()
     palette = ["#3b82f6", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6", "#06b6d4", "#84cc16", "#a855f7", "#6366f1", "#14b8a6", "#f97316", "#e11d48"]
     
+    import math
+    def haversine(lat1, lon1, lat2, lon2):
+        R = 6371.0
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        return R * c * 1000.0
+
+    all_complaints = db.query(models.Complaint).all()
+    
+    # Map each complaint to its nearest zone so zone counts cleanly partition all complaints
+    zone_count_map = {z.id: 0 for z in zones}
+    for c in all_complaints:
+        if zones and c.latitude is not None and c.longitude is not None:
+            nearest_z = min(zones, key=lambda z: haversine(z.center_latitude, z.center_longitude, c.latitude, c.longitude))
+            zone_count_map[nearest_z.id] += 1
+
     zone_counts = []
     for idx, z in enumerate(zones):
-        count = db.query(models.Complaint).filter(
-            func.earth_distance(
-                func.ll_to_earth(z.center_latitude, z.center_longitude),
-                func.ll_to_earth(models.Complaint.latitude, models.Complaint.longitude)
-            ) <= (z.radius_km * 1000.0)
-        ).count()
         zone_counts.append({
             "zone": z.zone_name,
             "code": z.code,
             "latitude": z.center_latitude,
             "longitude": z.center_longitude,
-            "count": count,
+            "lat": z.center_latitude,
+            "lng": z.center_longitude,
+            "count": zone_count_map.get(z.id, 0),
             "color": palette[idx % len(palette)]
         })
 
     return {
         "total_reports": total_reports,
+        "total_complaints": total_reports,
         "resolved_cases": resolved_cases,
         "avg_resolution_time_hrs": avg_resolution_time,
         "emergency_ratio_percent": emergency_ratio,
         "complaints_by_zone": zone_counts
     }
+

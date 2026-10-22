@@ -47,12 +47,24 @@ class ComplaintCreate(BaseModel):
     is_sos: Optional[bool] = False
     image_embedding: Optional[List[float]] = None
     distress_score: Optional[float] = 0.0
+    is_ai_generated: Optional[bool] = False
+    is_web_image: Optional[bool] = False
+    authenticity_status: Optional[str] = None
+
+class TriagePreviewRequest(BaseModel):
+    detection_confidence: Optional[float] = 0.0
+    description: Optional[str] = ""
+    visual_distress_score: Optional[float] = 0.0
+    detected_animal_type: Optional[str] = "Dog"
+    selected_symptoms: Optional[List[str]] = None
+    is_animal_detected: Optional[bool] = None
 
 class DuplicateCheckRequest(BaseModel):
     latitude: float
     longitude: float
     animal_type: Optional[str] = "Dog"
-    radius_meters: Optional[float] = 100.0
+    radius_meters: Optional[float] = 500.0
+    time_window_hours: Optional[float] = 3.0
 
 class VideoVerificationRequest(BaseModel):
     frame: str # Base64 image frame
@@ -84,6 +96,10 @@ class SOSRequest(BaseModel):
     latitude: float
     longitude: float
     note: Optional[str] = "Critical Emergency SOS"
+    photo_url: Optional[str] = None
+    is_ai_generated: Optional[bool] = False
+    is_web_image: Optional[bool] = False
+    authenticity_status: Optional[str] = None
 
 class DonationCheckoutRequest(BaseModel):
     donor_name: Optional[str] = "Anonymous Citizen"

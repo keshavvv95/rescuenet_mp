@@ -12,7 +12,7 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('citizen');
-  const [selectedZone, setSelectedZone] = useState('Dombivli East - Station & Ramnagar');
+  const [selectedZone, setSelectedZone] = useState('Mumbai East - Station & Ramnagar');
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -56,45 +56,45 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-12 text-slate-100 fade-in-up selection:bg-emerald-500 selection:text-emerald-950">
-      <div className="max-w-md w-full glass-panel bg-slate-900/80 border border-slate-800/80 p-8 rounded-3xl shadow-2xl shadow-black/60 space-y-6">
+    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center px-4 py-12 text-[#0F172A] fade-in-up">
+      <div className="max-w-md w-full bg-white border border-slate-200 p-8 rounded-3xl shadow-xl shadow-orange-500/5 space-y-6">
         
         {/* Header */}
         <div className="text-center space-y-1.5">
-          <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white mx-auto flex items-center justify-center shadow-lg shadow-emerald-600/30 border border-emerald-400/30">
-            <ShieldAlert className="h-6 w-6" />
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 text-white mx-auto flex items-center justify-center shadow-lg shadow-orange-500/25 border border-orange-400/30">
+            <ShieldAlert className="h-7 w-7" strokeWidth={2} />
           </div>
-          <h2 className="text-2xl font-extrabold text-white tracking-tight">
-            Join <span className="text-emerald-400">RescueNet</span>
+          <h2 className="text-2xl font-bold font-heading text-slate-900 tracking-tight">
+            Join <span className="text-orange-600">RescueNet</span>
           </h2>
-          <p className="text-[11px] font-mono text-cyan-400 uppercase tracking-widest">
-            KDMC Dombivli Civic RescueNet Account
+          <p className="text-[11px] font-mono font-semibold text-slate-500 uppercase tracking-widest">
+            KDMC Mumbai Civic RescueNet Account
           </p>
         </div>
 
         {error && (
-          <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 px-4 py-3 rounded-2xl flex items-center gap-2 text-xs font-medium backdrop-blur-md">
-            <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2 text-xs font-medium">
+            <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-2xl flex items-center gap-2 text-xs font-medium backdrop-blur-md">
-            <CheckCircle className="h-4 w-4 shrink-0 text-emerald-400" />
+          <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl flex items-center gap-2 text-xs font-semibold">
+            <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600" strokeWidth={2} />
             <span>Registration successful! Redirecting to feed...</span>
           </div>
         )}
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1.5">
+            <label className="block text-xs font-bold text-slate-800 mb-1.5 font-heading">
               Select Account Role *
             </label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full bg-slate-950/70 border border-slate-800 px-3.5 py-3 text-xs text-white rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-medium transition-all"
+              className="w-full bg-slate-50 border border-slate-200 px-3.5 py-3 text-xs text-slate-900 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 font-medium transition-all"
             >
               <option value="citizen">Citizen (Reporter / Animal Lover)</option>
               <option value="officer">Municipal Officer / Vet</option>
@@ -105,7 +105,7 @@ const Register = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1.5">
+            <label className="block text-xs font-bold text-slate-800 mb-1.5 font-heading">
               Full Name *
             </label>
             <input
@@ -113,13 +113,13 @@ const Register = () => {
               required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full bg-slate-950/70 border border-slate-800 px-3.5 py-3 text-xs text-white rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-medium placeholder-slate-500 transition-all"
+              className="w-full bg-slate-50 border border-slate-200 px-3.5 py-3 text-xs text-slate-900 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 font-medium placeholder-slate-400 transition-all"
               placeholder="Enter your full name"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1.5">
+            <label className="block text-xs font-bold text-slate-800 mb-1.5 font-heading">
               Email Address *
             </label>
             <input
@@ -127,30 +127,30 @@ const Register = () => {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-slate-950/70 border border-slate-800 px-3.5 py-3 text-xs text-white rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-medium placeholder-slate-500 transition-all"
+              className="w-full bg-slate-50 border border-slate-200 px-3.5 py-3 text-xs text-slate-900 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 font-medium placeholder-slate-400 transition-all"
               placeholder="your.email@domain.com"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1.5">
-              Primary Dombivli Municipal Zone *
+            <label className="block text-xs font-bold text-slate-800 mb-1.5 font-heading">
+              Primary Mumbai Municipal Zone *
             </label>
             <select
               value={selectedZone}
               onChange={(e) => setSelectedZone(e.target.value)}
-              className="w-full bg-slate-950/70 border border-slate-800 px-3.5 py-3 text-xs text-white rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-medium transition-all"
+              className="w-full bg-slate-50 border border-slate-200 px-3.5 py-3 text-xs text-slate-900 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 font-medium transition-all"
             >
-              <option value="Dombivli East - Station & Ramnagar">ZONE 1: Dombivli East - Station & Ramnagar</option>
-              <option value="Dombivli East - Phadke Road & Manpada">ZONE 2: Dombivli East - Phadke Road & Manpada</option>
-              <option value="Dombivli East - MIDC & Residential">ZONE 3: Dombivli East - MIDC & Residential</option>
-              <option value="Dombivli West - Station & Subhash Road">ZONE 4: Dombivli West - Station & Subhash Road</option>
-              <option value="Dombivli West - Garibachawada & Kopar">ZONE 5: Dombivli West - Garibachawada & Kopar</option>
+              <option value="Mumbai East - Station & Ramnagar">ZONE 1: Mumbai East - Station & Ramnagar</option>
+              <option value="Mumbai East - Phadke Road & Manpada">ZONE 2: Mumbai East - Phadke Road & Manpada</option>
+              <option value="Mumbai East - MIDC & Residential">ZONE 3: Mumbai East - MIDC & Residential</option>
+              <option value="Mumbai West - Station & Subhash Road">ZONE 4: Mumbai West - Station & Subhash Road</option>
+              <option value="Mumbai West - Garibachawada & Kopar">ZONE 5: Mumbai West - Garibachawada & Kopar</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1.5">
+            <label className="block text-xs font-bold text-slate-800 mb-1.5 font-heading">
               Password *
             </label>
             <input
@@ -158,13 +158,13 @@ const Register = () => {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-slate-950/70 border border-slate-800 px-3.5 py-3 text-xs text-white rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-medium placeholder-slate-500 transition-all"
+              className="w-full bg-slate-50 border border-slate-200 px-3.5 py-3 text-xs text-slate-900 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 font-medium placeholder-slate-400 transition-all"
               placeholder="••••••••"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1.5">
+            <label className="block text-xs font-bold text-slate-800 mb-1.5 font-heading">
               Confirm Password *
             </label>
             <input
@@ -172,7 +172,7 @@ const Register = () => {
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full bg-slate-950/70 border border-slate-800 px-3.5 py-3 text-xs text-white rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-medium placeholder-slate-500 transition-all"
+              className="w-full bg-slate-50 border border-slate-200 px-3.5 py-3 text-xs text-slate-900 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 font-medium placeholder-slate-400 transition-all"
               placeholder="••••••••"
             />
           </div>
@@ -180,16 +180,16 @@ const Register = () => {
           <button
             type="submit"
             disabled={loading || success}
-            className="w-full py-3.5 px-4 text-xs font-extrabold rounded-xl text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 transition-all shadow-lg shadow-emerald-950 border border-emerald-400/30 disabled:opacity-50 cursor-pointer active:scale-98"
+            className="w-full py-3.5 px-4 text-xs font-bold font-heading rounded-xl text-white bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 transition-all shadow-md shadow-orange-500/25 disabled:opacity-50 cursor-pointer active:scale-98"
           >
             {loading ? <Loader className="h-4 w-4 animate-spin text-white mx-auto" /> : 'Create RescueNet Account'}
           </button>
         </form>
 
-        <div className="text-center pt-3 border-t border-slate-800/80">
-          <p className="text-xs text-slate-400">
+        <div className="text-center pt-3 border-t border-slate-100">
+          <p className="text-xs text-slate-500">
             Already registered?{' '}
-            <Link to="/login" className="font-bold text-emerald-400 hover:text-emerald-300 underline underline-offset-4">
+            <Link to="/login" className="font-bold text-orange-600 hover:text-orange-700 hover:underline underline-offset-4">
               Sign in
             </Link>
           </p>
