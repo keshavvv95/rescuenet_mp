@@ -26,7 +26,9 @@ const ReportAnimal = () => {
     latitude: 19.0760,
     longitude: 72.8777,
     accuracy: 10,
-    address: 'Fetching live GPS address...'
+    address: 'Detecting live street address...',
+    zoneName: 'Locating municipal zone...',
+    zoneCode: 'DOMB-ZONE'
   });
   const [landmarkNote, setLandmarkNote] = useState('');
   const [isLocating, setIsLocating] = useState(true);
@@ -64,29 +66,31 @@ const ReportAnimal = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  // Auto-acquire GPS on mount
-  useEffect(() => {
-    let isMounted = true;
-    const fetchLocation = async () => {
-      try {
-        const loc = await getCurrentLocation();
-        if (isMounted && loc) {
-          setLocationData({
-            latitude: Number(loc.latitude.toFixed(6)),
-            longitude: Number(loc.longitude.toFixed(6)),
-            accuracy: Math.round(loc.accuracy || 12),
-            address: loc.address || 'Mumbai Municipal Zone Net'
-          });
-          checkDuplicates(loc.latitude, loc.longitude);
-        }
-      } catch (err) {
-        console.warn('Location error, fallback activated', err);
-      } finally {
-        if (isMounted) setIsLocating(false);
+  // Auto-acquire GPS & reverse geocode on mount or manual refresh
+  const detectLocation = async () => {
+    setIsLocating(true);
+    try {
+      const loc = await getCurrentLocation();
+      if (loc) {
+        setLocationData({
+          latitude: Number(loc.latitude.toFixed(6)),
+          longitude: Number(loc.longitude.toFixed(6)),
+          accuracy: Math.round(loc.accuracy || 12),
+          address: loc.address || 'Mumbai Municipal Zone Net',
+          zoneName: loc.zoneName || 'Mumbai Municipal Area',
+          zoneCode: loc.zoneCode || 'MUM-ZONE'
+        });
+        checkDuplicates(loc.latitude, loc.longitude);
       }
-    };
-    fetchLocation();
-    return () => { isMounted = false; };
+    } catch (err) {
+      console.warn('Location error, fallback activated', err);
+    } finally {
+      setIsLocating(false);
+    }
+  };
+
+  useEffect(() => {
+    detectLocation();
   }, []);
 
   // Check 500m duplicates
@@ -232,7 +236,7 @@ const ReportAnimal = () => {
         photo_url: uploadedPhotoUrl || '/static/uploads/reports/default.jpg',
         latitude: Number(locationData.latitude) || 19.0760,
         longitude: Number(locationData.longitude) || 72.8777,
-        address: landmarkNote || locationData.address || 'Current Location Coordinates',
+        address: landmarkNote ? `${landmarkNote}, ${locationData.address}` : (locationData.address || 'Mumbai Municipal Area'),
         detected_animal_type: selectedAnimal || aiResult?.detected_animal || 'Dog',
         detection_confidence: aiResult?.confidence || 0.0,
         confirmed_animal_type: selectedAnimal || aiResult?.detected_animal || 'Dog',
@@ -616,24 +620,55 @@ const ReportAnimal = () => {
 
         {activeTab === 'Location' && (
           <>
-            {/* Incident Coordinates Card */}
+            {/* Incident Location & Municipal Zone Card */}
             <div className="bg-white rounded-3xl border border-slate-200 p-5 space-y-3.5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-orange-500 stroke-[2]" />
-                  <h3 className="text-sm font-heading font-extrabold text-slate-900">Incident Coordinates</h3>
+                  <h3 className="text-sm font-heading font-extrabold text-slate-900">Incident Location & Zone</h3>
                 </div>
-                <span className="text-[10px] font-mono text-orange-600 font-bold bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200">
-                  GPS ±{locationData.accuracy}m Accuracy {isLocating ? 'Locating...' : 'Verified'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={detectLocation}
+                    disabled={isLocating}
+                    title="Re-detect GPS and reverse-geocode address"
+                    className="p-1 hover:bg-orange-50 text-orange-600 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-orange-200"
+                  >
+                    <RotateCcw className={`w-3.5 h-3.5 ${isLocating ? 'animate-spin' : ''}`} />
+                  </button>
+                  <span className="text-[10px] font-mono text-orange-600 font-bold bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200">
+                    GPS ±{locationData.accuracy}m Accuracy {isLocating ? 'Locating...' : 'Verified'}
+                  </span>
+                </div>
               </div>
 
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-1">
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
                 <div className="flex items-start gap-2.5">
                   <MapPin className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="text-xs font-heading font-bold text-slate-900 leading-snug">{locationData.address}</h4>
-                    <p className="text-[11px] text-slate-500 font-mono mt-0.5">Lat: {locationData.latitude}, Lng: {locationData.longitude}</p>
+                  <div className="flex-1 min-w-0">
+                    {isLocating ? (
+                      <div className="flex items-center gap-2 text-xs text-orange-600 font-medium py-1">
+                        <Loader className="w-3.5 h-3.5 animate-spin" />
+                        <span>Resolving street address & municipal zone...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <h4 className="text-xs sm:text-sm font-heading font-bold text-slate-900 leading-snug break-words">
+                          {locationData.address}
+                        </h4>
+                        {locationData.zoneName && (
+                          <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-orange-700 bg-orange-100/70 border border-orange-200 px-2 py-0.5 rounded-md">
+                              📍 Assigned Zone: {locationData.zoneName}
+                            </span>
+                          </div>
+                        )}
+                        <p className="text-[11px] text-slate-500 font-mono mt-1">
+                          Coordinates: {locationData.latitude}, {locationData.longitude}
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

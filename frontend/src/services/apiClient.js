@@ -89,6 +89,10 @@ export const apiClient = {
     return await this.checkDuplicates({ latitude, longitude, radius_meters: radius });
   },
 
+  async reverseGeocode(latitude, longitude) {
+    return await this.request(`/reports/reverse-geocode?lat=${latitude}&lng=${longitude}`);
+  },
+
   // 3. Submit Complaint
   async submitReport(reportData) {
     return await this.request('/reports', {

@@ -8,7 +8,7 @@ from app import schemas, crud, auth, models
 from app.ai.detector import detect_animal
 from app.ai.priority_engine import calculate_priority_score
 from app.ai.duplicate_detector import find_duplicate_reports
-from app.services.mumbai_mapper import resolve_mumbai_zone
+from app.services.mumbai_mapper import resolve_mumbai_zone, reverse_geocode_coordinates
 
 router = APIRouter(prefix="/api/reports", tags=["Citizen Stray Animal Reporting"])
 
@@ -165,6 +165,19 @@ def check_duplicate(
     )
     return res
 
+@router.get("/reverse-geocode")
+def reverse_geocode(
+    lat: float,
+    lng: float,
+    db: Session = Depends(get_db)
+):
+    """
+    Resolves human-readable street address and assigned municipal zone
+    for the provided latitude and longitude.
+    """
+    zone_info = resolve_mumbai_zone(db, lat, lng)
+    return reverse_geocode_coordinates(lat, lng, zone_info)
+
 @router.post("", status_code=status.HTTP_201_CREATED)
 def submit_report(
     req: schemas.ComplaintCreate,
@@ -179,6 +192,11 @@ def submit_report(
     
     # Resolve exact Mumbai zone via spatial database query
     zone_info = resolve_mumbai_zone(db, req.latitude, req.longitude)
+    
+    # Auto-enrich address if missing or sent as raw coordinates
+    if not req.address or req.address.strip().lower().startswith("lat:") or req.address.strip() == "Current Location Coordinates":
+        geo = reverse_geocode_coordinates(req.latitude, req.longitude, zone_info)
+        req.address = geo.get("address") or f"{zone_info['name']} (GPS Verified)"
     
     db_report = crud.create_complaint(db, req, citizen_id)
 

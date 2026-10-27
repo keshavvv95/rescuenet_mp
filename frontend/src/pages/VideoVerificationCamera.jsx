@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { apiClient } from '../services/apiClient';
+import { reverseGeocode } from '../services/locationHelper';
 import { 
   Camera, CheckCircle2, RefreshCw, Eye, ShieldCheck, AlertCircle, Loader, 
   UploadCloud, Lock, Compass, Navigation, Flashlight, Phone, HeartPulse, Truck,
@@ -48,17 +49,22 @@ export default function VideoVerificationCamera() {
     aiData.detected_animal &&
     aiData.detected_animal !== 'Unknown' &&
     aiData.detected_animal !== 'NO ANIMAL DETECTED' &&
+    aiData.is_animal_detected === true &&
     (Number(aiData.confidence) || 0) > 0
   );
 
-  // Compute overall match score (0-100)
-  const matchPercent = verifyData?.similarity_percentage
-    ? Number(verifyData.similarity_percentage)
-    : isValidAnimal
-      ? Math.round((Number(aiData.confidence) || 0) * 100)
-      : 0;
+  // Compute overall match score (0-100) — strictly 0 when no animal is detected in live frame
+  const matchPercent = !isValidAnimal
+    ? 0
+    : verifyData?.similarity_percentage !== undefined
+      ? Number(verifyData.similarity_percentage)
+      : Math.round((Number(aiData?.confidence) || 0) * 100);
 
-  const isBiometricMatch = (verifyData?.match || matchPercent >= 45) && isValidAnimal;
+  const isBiometricMatch = Boolean(
+    isValidAnimal &&
+    verifyData?.match === true &&
+    matchPercent >= 60
+  );
 
   // Load active complaints from DB for selection
   useEffect(() => {
@@ -90,15 +96,22 @@ export default function VideoVerificationCamera() {
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setLocationStr(`${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
+        async (pos) => {
+          const lat = Number(pos.coords.latitude.toFixed(5));
+          const lng = Number(pos.coords.longitude.toFixed(5));
+          try {
+            const geo = await reverseGeocode(lat, lng);
+            setLocationStr(`${geo.address || geo.zoneName} (${lat}, ${lng})`);
+          } catch {
+            setLocationStr(`${lat}, ${lng} (GPS Verified)`);
+          }
         },
-        (err) => {
-          setLocationStr("19.2183, 72.9781 (Field Station)");
+        () => {
+          setLocationStr("Mumbai East - Station & Ramnagar (Field Station)");
         }
       );
     } else {
-      setLocationStr("19.2183, 72.9781 (Field Station)");
+      setLocationStr("Mumbai East - Station & Ramnagar (Field Station)");
     }
 
     return () => {
@@ -609,7 +622,7 @@ export default function VideoVerificationCamera() {
                 <h4 className="text-xs font-heading font-bold text-slate-900 truncate">
                   {selectedCase ? `${selectedCase.animal_type || 'Case'} Target` : 'AI Confidence'}
                 </h4>
-                <p className={`text-[10px] font-mono font-bold ${isBiometricMatch ? 'text-emerald-600' : 'text-orange-600'}`}>
+                <p className={`text-[10px] font-mono font-bold ${isBiometricMatch ? 'text-emerald-600' : matchPercent > 0 ? 'text-amber-600' : 'text-rose-600'}`}>
                   Match: {matchPercent.toFixed(1)}%
                 </p>
               </div>
@@ -624,27 +637,33 @@ export default function VideoVerificationCamera() {
                 <ShieldCheck className="w-4 h-4 text-amber-400 stroke-[2]" />
                 AI Model Analysis ({aiData?.model_used || "yolov8n + DINOv2"})
               </span>
-              <span className="text-amber-400 font-mono">{matchPercent.toFixed(1)}%</span>
+              <span className={`font-mono ${isBiometricMatch ? 'text-emerald-400' : matchPercent > 0 ? 'text-amber-400' : 'text-rose-400'}`}>
+                {matchPercent.toFixed(1)}%
+              </span>
             </div>
             
             <div className="w-full bg-slate-950 rounded-full h-2.5 overflow-hidden border border-slate-800">
               <div 
                 className={`h-full rounded-full transition-all duration-700 ${
                   isBiometricMatch 
-                    ? 'bg-gradient-to-r from-emerald-500 to-amber-400' 
-                    : 'bg-gradient-to-r from-orange-500 to-amber-400'
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400' 
+                    : matchPercent > 0
+                      ? 'bg-gradient-to-r from-orange-500 to-amber-400'
+                      : 'bg-slate-800'
                 }`} 
                 style={{ width: `${Math.min(100, Math.max(0, matchPercent))}%` }}
               ></div>
             </div>
 
             <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 pt-1">
-              <span>Confidence: {!isValidAnimal ? "Unknown" : matchPercent >= 60 ? "High Match" : "Moderate"}</span>
+              <span>Confidence: {!isValidAnimal ? "No Animal Detected" : isBiometricMatch ? "Verified Match" : "Biometric Mismatch"}</span>
               <span>Distress Score: {isValidAnimal ? (aiData.distress_score || 0.0) : "0.0"}</span>
             </div>
 
             {verifyData?.explanation && (
-              <p className="text-[10px] font-mono text-amber-200/90 pt-1 border-t border-slate-800/80 leading-relaxed">
+              <p className={`text-[10px] font-mono pt-1 border-t border-slate-800/80 leading-relaxed ${
+                isBiometricMatch ? 'text-emerald-300' : 'text-amber-300'
+              }`}>
                 ℹ {verifyData.explanation}
               </p>
             )}
@@ -654,11 +673,11 @@ export default function VideoVerificationCamera() {
           <div className="space-y-2 pt-1">
             <button 
               onClick={handleConfirmMatch}
-              disabled={securing || (!isValidAnimal && matchPercent < 40)}
+              disabled={securing || !isValidAnimal || !isBiometricMatch || matchPercent < 60}
               className={`w-full py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2 font-heading font-bold text-xs transition-all ${
-                isValidAnimal || matchPercent >= 40 
-                  ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white cursor-pointer shadow-orange-500/25' 
-                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                isValidAnimal && isBiometricMatch && matchPercent >= 60
+                  ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white cursor-pointer shadow-orange-500/25 active:scale-98' 
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
               }`}
             >
               {securing ? (
