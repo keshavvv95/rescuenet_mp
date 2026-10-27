@@ -55,7 +55,7 @@ Interactive OpenAPI Swagger Documentation will be live at:
 
 ## 📄 Database Schema & ER Diagram
 
-Raw PostGIS SQL schema definition is provided in [`schema.sql`](file:///c:/Users/athar/OneDrive/Desktop/PashuRakshak/backend/schema.sql).
+Raw PostGIS SQL schema definition is provided in [`schema.sql`](./schema.sql).
 
 Tables:
 1. `community_zones`

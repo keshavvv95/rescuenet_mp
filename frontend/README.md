@@ -118,4 +118,4 @@ The following components contain explicit `// SIMPLIFIED:` comments indicating w
 
 ## 📄 API Specification (`mock-api.md`)
 
-Full API request & response contracts for all 10 modules are documented in [mock-api.md](file:///c:/Users/athar/OneDrive/Desktop/PashuRakshak/frontend/mock-api.md).
+Full API request & response contracts for all 10 modules are documented in [mock-api.md](./mock-api.md).
